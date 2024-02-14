@@ -1517,6 +1517,19 @@ describe("generateZodSchema", () => {
       });"
     `);
   });
+
+  it("should generate inline schema for template literals", () => {
+    const source = `
+      interface Test {
+        templateLiteral?: \`.__.\${boolean}.__.\${string}.__.\${number}.__.\${any}.__.\`
+      }
+    `;
+    expect(generate(source)).toMatchInlineSnapshot(`
+      "const testSchema = z.object({
+          templateLiteral: z.custom<\`.__.\${boolean}.__.\${string}.__.\${number}.__.\${any}.__.\`>(val => \\\/^\\.__\\.true|false\\.__\\.\\w\\.__\\.\\d\\.__\\.[\\s\\S]*\\.__\\.\\$\\\/.test(val as string)).optional()
+      });"
+    `);
+  });
 });
 
 /**

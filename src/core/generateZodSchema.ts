@@ -4,6 +4,7 @@ import ts, { factory as f } from "typescript";
 import { CustomJSDocFormatTypes } from "../config";
 import { findNode } from "../utils/findNode";
 import { isNotNull } from "../utils/isNotNull";
+import templateLiteralToRegex from "../utils/tempalteLiteralToRegex";
 import {
   JSDocTags,
   ZodProperty,
@@ -866,6 +867,50 @@ function buildZodPrimitive({
       sourceFile,
       dependencies,
     });
+  }
+
+  if (ts.isTemplateLiteralTypeNode(typeNode)) {
+    const zodCall = f.createPropertyAccessExpression(
+      f.createIdentifier("z"),
+      "custom"
+    );
+
+    const arrowFunc = f.createArrowFunction(
+      undefined,
+      undefined,
+      [
+        f.createParameterDeclaration(
+          undefined,
+          undefined,
+          "val",
+          undefined,
+          undefined,
+          undefined
+        ),
+      ],
+      undefined,
+      undefined,
+      f.createCallExpression(
+        f.createPropertyAccessExpression(
+          f.createRegularExpressionLiteral(
+            templateLiteralToRegex(typeNode).source
+          ),
+          "test"
+        ),
+        undefined,
+        [
+          f.createAsExpression(
+            f.createIdentifier("val"),
+            f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
+          ),
+        ]
+      )
+    );
+
+    return withZodProperties(
+      f.createCallExpression(zodCall, [typeNode], [arrowFunc]),
+      zodProperties
+    );
   }
 
   switch (typeNode.kind) {
